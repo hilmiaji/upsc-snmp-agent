@@ -1,0 +1,102 @@
+#+TITLE: UPS-MIB structure based on RFC-1628
+#+OPTIONS: author:nil timestamp:nil toc:nil num:nil val:nil html-style:nil H:3 ^:{}
+
+This is a non-authoritative extract of the information contained by
+the UPS-MIB. For any details, refer to the source: [[./rfc1628.txt][RFC1628]]
+
+All OIDs are relative to the MIB's base OID: .1.3.6.1.2.1.33
+
+
+| OID        | Name                              | Data Type           |      Unit | Comment                                                                                   |
+| <l>        |                                   |                     |       <r> |                                                                                           |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .1         | upsObjects                        |                     |           |                                                                                           |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .1.1       | upsIdent                          |                     |           |                                                                                           |
+| .1.1.1     | upsIdentManufacturer              | string (0..31)      |           | The name of the UPS manufacturer                                                          |
+| .1.1.2     | upsIdentModel                     | string (0..63)      |           | The UPS Model designation                                                                 |
+| .1.1.3     | upsIdentUPSSoftwareVersion        | string (0..63)      |           | The UPS firmware/software version(s)                                                      |
+| .1.1.4     | upsIdentAgentSoftwareVersion      | string (0..63)      |           | The UPS agent software version                                                            |
+| .1.1.5     | upsIdentName                      | string (0..63)      |           | A string identifying the UPS                                                              |
+| .1.1.6     | upsIdentAttachedDevices           | string (0..63)      |           | A string identifying the devices attached to the output of the UPS                        |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .1.2       | upsBattery                        |                     |           |                                                                                           |
+| .1.2.1     | upsBatteryStatus                  | integer (1..4)      |           | unknown(1), normal(2), low(3), depleted(4)                                                |
+| .1.2.2     | upsSecondsOnBattery               | nonNegInteger       |   Seconds | Time elapsed since switching to battery power, or 0 if not on battery                     |
+| .1.2.3     | upsEstimatedMinutesRemaining      | positiveInteger     |   Minutes | (Estimated) remaining battery time                                                        |
+| .1.2.4     | upsEstimatedChargeRemaining       | integer (0..100)    |   Percent | Estimated remaining charge as a percent of full charge                                    |
+| .1.2.5     | upsBatteryVoltage                 | nonNegInteger       |  0.1 V DC | Present battery voltage                                                                   |
+| .1.2.6     | upsBatteryCurrent                 | integer32           |  0.1 A DC | Present battery current                                                                   |
+| .1.2.7     | upsBatteryTemperature             | integer32           |        *C | Ambient temperature at or near the UPS battery casing                                     |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .1.3       | upsInput                          |                     |           |                                                                                           |
+| .1.3.1     | upsInputLineBads                  | counter32           |           | Number of times the input entered out-of-tolerance condition                              |
+| .1.3.2     | upsInputNumLines                  | nonNegInteger       |           | Number of input lines utilized in this device                                             |
+| .1.3.3     | upsInputTable                     | sequence of .1      |           |                                                                                           |
+| .1.3.3.1   | upsInputEntry                     | sequence of fields: |           |                                                                                           |
+| .1.3.3.1.1 | upsInputLineIndex                 | positiveInteger     |           | The input line identifier                                                                 |
+| .1.3.3.1.2 | upsInputFrequency                 | nonNegInteger       |    0.1 Hz | Present frequency                                                                         |
+| .1.3.3.1.3 | upsInputVoltage                   | nonNegInteger       |     V RMS | Magnitude of present input voltage                                                        |
+| .1.3.3.1.4 | upsInputCurrent                   | nonNegInteger       | 0.1 A RMS | Magnitude of present input current                                                        |
+| .1.3.3.1.5 | upsInputTruePower                 | nonNegInteger       |         W | Magnitude of present input true power                                                     |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .1.4       | upsOutput                         |                     |           |                                                                                           |
+| .1.4.1     | upsOutputSource                   | integer (1..7)      |           | other(1), none(2), normal(3), bypass(4), battery(5), booster(6), reducer(7)               |
+| .1.4.2     | upsOutputFrequency                | nonNegInteger       |    0.1 Hz | Present output freq                                                                       |
+| .1.4.3     | upsOutputNumLines                 | nonNegInteger       |           | Number of output lines utilized in this device                                            |
+| .1.4.4     | upsOutputTable                    | sequence of .1      |           |                                                                                           |
+| .1.4.4.1   | upsOutputEntry                    | sequence of fields: |           |                                                                                           |
+| .1.4.4.1.1 | upsOutputLineIndex                | positiveInteger     |           | The output line identifier                                                                |
+| .1.4.4.1.2 | upsOutputVoltage                  | nonNegInteger       |     V RMS | The present output voltage                                                                |
+| .1.4.4.1.3 | upsOutputCurrent                  | nonNegInteger       | 0.1 A RMS | The present output current                                                                |
+| .1.4.4.1.4 | upsOutputPower                    | nonNegInteger       |         W | The present output true power                                                             |
+| .1.4.4.1.5 | upsOutputPercentLoad              | Integer             |   Percent | UPS power capacity presently used on this output line                                     |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .1.5       | upsBypass                         |                     |           |                                                                                           |
+| .1.5.1     | upsBypassFrequency                | nonNegInteger       |    0.1 Hz | The present bypass frequency                                                              |
+| .1.5.2     | upsBypassNumLines                 | nonNegInteger       |           | Number of bypass lines utilized in this device                                            |
+| ...        |                                   |                     |           |                                                                                           |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .1.6       | upsAlarm                          |                     |           |                                                                                           |
+| .1.6.1     | upsAlarmPresent                   | gauge32             |           | Number of active alarm conditions                                                         |
+| .1.6.2     | upsAlarmTable                     |                     |           |                                                                                           |
+| ...        |                                   |                     |           |                                                                                           |
+| .1.6.3     | upsWellKnownAlarms                | OID                 |           |                                                                                           |
+| .1.6.3.1   | upsAlarmBatteryBad                |                     |           |                                                                                           |
+| ...        |                                   |                     |           |                                                                                           |
+| .1.6.3.24  | upsAlarmTestInProgress            |                     |           |                                                                                           |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .1.7       | upsTest                           |                     |           |                                                                                           |
+| .1.7.1     | upsTestId                         | OID                 |           |                                                                                           |
+| .1.7.2     | upsTestSpinLock                   | TestAndIncr         |           |                                                                                           |
+| .1.7.3     | upsTestResultsSummary             | integer (1..6)      |           | donePass(1), doneWarning(2), doneError(3), aborted(4), inProgress(5), noTestsInitiated(6) |
+| ...        |                                   |                     |           |                                                                                           |
+| .1.7.7     | upsWellKnownTests                 |                     |           |                                                                                           |
+| .1.7.7.1   | upsTestNoTestsInitiated           |                     |           |                                                                                           |
+| .1.7.7.2   | upsTestAbortTestInProgress        |                     |           |                                                                                           |
+| .1.7.7.3   | upsTestGeneralSystemsTest         |                     |           |                                                                                           |
+| .1.7.7.4   | upsTestQuickBatteryTest           |                     |           |                                                                                           |
+| .1.7.7.5   | upsTestDeepBatteryCalibration     |                     |           |                                                                                           |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .1.8       | upsControl                        |                     |           |                                                                                           |
+| .1.8.1     | upsShutdownType                   | integer (1..2)      |           | output(1), system(2)                                                                      |
+| .1.8.2     | upsShutdownAfterDelay             | int (-1..intMax)    |   Seconds | -1 if no countdown in effect                                                              |
+| .1.8.3     | upsStartupAfterDelay              | int (-1..intMax)    |   Seconds | -1 if no countdown in effect                                                              |
+| .1.8.4     | upsRebootWithDuration             | int (-1..300)       |   Seconds | -1 if no countdown in effect                                                              |
+| .1.8.5     | upsAutoRestart                    | integer (1..2)      |           | on(1), off(2)                                                                             |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .1.9       | upsConfig                         |                     |           |                                                                                           |
+| .1.9.1     | upsConfigInputVoltage             | nonNegInteger       |     V RMS |                                                                                           |
+| .1.9.2     | upsConfigInputFreq                | nonNegInteger       |    0.1 Hz |                                                                                           |
+| .1.9.3     | upsConfigOutputVoltage            | nonNegInteger       |     V RMS |                                                                                           |
+| .1.9.4     | upsConfigOutputFreq               | nonNegInteger       |    0.1 Hz |                                                                                           |
+| .1.9.5     | upsConfigOutputVA                 | nonNegInteger       |        VA |                                                                                           |
+| .1.9.6     | upsConfigOutputPower              | nonNegInteger       |         W |                                                                                           |
+| .1.9.7     | upsConfigLowBattTime              | nonNegInteger       |   Minutes |                                                                                           |
+| .1.9.8     | upsConfigAudibleStatus            | integer (1..3)      |           | disabled(1), enabled(2), muted(3)                                                         |
+| .1.9.9     | upsConfigLowVoltageTransferPoint  | nonNegInteger       |     V RMS |                                                                                           |
+| .1.9.10    | upsConfigHighVoltageTransferPoint | nonNegInteger       |     V RMS |                                                                                           |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|
+| .2         | upsTraps                          |                     |           |                                                                                           |
+| .3         | upsConformance                    |                     |           |                                                                                           |
+|------------+-----------------------------------+---------------------+-----------+-------------------------------------------------------------------------------------------|

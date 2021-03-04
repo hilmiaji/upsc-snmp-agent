@@ -1,0 +1,164 @@
+#+TITLE: UPSC-SNMP-Agent
+#+OPTIONS: author:nil timestamp:nil toc:nil num:nil val:nil html-style:nil H:3 ^:{}
+
+*UPSC-SNMP-Agent* exposes your el-cheapo locally connected UPS via
+the [[https://en.wikipedia.org/wiki/Simple_Network_Management_Protocol][SNMP]] network management protocol. This enables various equipment
+(servers, NAS) to poll the status of the UPS in a standardized way
+over the network, and initiate proper shutdown procedures in case
+mains power has gone and the battery is nearing depletion.
+
+Ingredients:
+
+- an UPS connected to a local system via whatever means (most commonly
+  serial port or USB), set up to be queried via the tools provided by
+  [[https://networkupstools.org/][NUT]] (=upsc=);
+- one or more remote computing systems powered by this UPS (remote in
+  the sense that the UPS is not directly connected to them) that are
+  able to monitor an UPS via SNMP, and shut themselves down if they
+  see the UPS battery reported as 'low'.
+
+If you find yourself in a position stuck with the above ingredients...
+well, that is a sign that you should have bought a real UPS (with
+out-of-the-box SNMP capabilities). But fear not, with minimal hacking
+and UPSC-SNMP-Agent, you might achieve very similar results.
+
+On the other hand:
+- if your UPS natively supports SNMP;
+- if your remote computing systems can query the UPS via non-SNMP
+  over-the-network queries provided by NUT;
+- if you can arrange for your local system to shut down the remote
+  ones via different means (e.g., by some clever =SHUTDOWNCMD=);
+
+... then you do not need UPSC-SNMP-Agent and should stop reading here!
+
+** License and Disclaimer
+
+This program (UPSC-SNMP-Agent) is made available to you under a very
+permissive license, the MIT license (included in the file [[./LICENSE][LICENSE]]).
+You can basically make use of it in whatever way you want, except
+pretending that you made it.
+
+In exchange, please keep the following in mind: I am *not responsible*
+if your UPS goes down and takes down your critical infrastructure
+without notice (due to incorrect or misinterpreted data from this
+program). I am also *not responsible* in case your UPS is fine, but
+your critical infrastructure believes otherwise (due to the same
+reason) and goes down. Thoroughly and regularly test your setup for
+fault scenarios at times when taking down your critical infrastructure
+does not hurt, and don't send me complaints (or worse) when it does!
+
+** What is this?
+
+UPSC-SNMP-Agent, as its name tries to convey, is an /SNMP agent/, or
+at least a part thereof. That is, a component designed to answer SNMP
+queries on behalf of an UPS that, by itself, is not capable to do so.
+
+To be more concrete: UPSC-SNMP-Agent translates the output of the
+=upsc= command (the simple UPS client, part of the NUT client tools)
+into (a useful subset of) the [[https://tools.ietf.org/html/rfc1628][UPS-MIB]], the standard
+(vendor-independent) [[https://en.wikipedia.org/wiki/Management_information_base][MIB]] for UPS devices. This means that most
+SNMP-capable general computing devices interested in the status of an
+UPS will be able to query it.
+
+UPSC-SNMP-Agent is not a full-blown SNMP agent in itself. It is
+implemented as a so-called "pass script" for [[http://www.net-snmp.org/][Net-SNMP]], the de-facto
+standard SNMP implementation for general-purpose computers.
+Essentially, UPSC-SNMP-Agent is a script to answer SNMP GET requests
+within the object tree of the UPS-MIB (everything under
+=.1.3.6.1.2.1.33=).
+
+See [[./doc/UPS-MIB.org][this document]] for a tabular extract of the information presented
+by the UPS-MIB.
+
+** How do I use this?
+
+Let's say that you have your UPS set up, connected to the host
+=theups.mylan=. First, make sure that you are able to use the =upsc=
+command on this host and see relevant (and correct) output for your
+UPS. Setting up Network UPS Tools (NUT) to achieve this is a
+prerequisite, but documenting it is out of scope here.
+
+Then, you need to install and setup =snmpd= on this system. This is
+also beyond the scope of this document; consult the Net-SNMP
+documentation.  Make sure to set up the correct access controls for
+your environment.  On the other hand, you do not need to install any
+MIBs (unless you need them for some other reason), so it is safe to
+ignore anything related.
+
+Manually install the UPSC-SNMP-Agent script as
+=/usr/bin/upsc-snmp-agent.py= (or at any other location you desire).
+You also need python3 installed to be able to run it. Add a single
+hook in =/etc/snmp/snmpd.conf= to pass all queries of the UPS-MIB's
+object identifiers to this script:
+
+: pass_persist .1.3.6.1.2.1.33 /usr/bin/python3 /usr/bin/upsc-snmp-agent.py
+
+Now you need to make some changes to the =upsc-snmp-agent.py= script
+itself, see the next section [[Configuration]].
+
+After you are done with that, restart your =snmpd= and verify that you
+are able to query stuff (preferably from the remote machine for which
+you are doing this setup, or at least a different remote host). You
+need Net-SNMP or equivalent management/client tooling there. Assuming
+that you set up SNMP v2 with a read-only community of =public=, an
+=snmpget= test command would look like this:
+
+: $ snmpget -v2c -cpublic theups.mylan .1.3.6.1.2.1.33.1.1.4.0
+: SNMPv2-SMI::mib-2.33.1.1.4.0 = STRING: "UPSC-SNMP-Agent"
+
+The above OID belongs to =upsIdentAgentSoftwareVersion=, and the
+returned value is proof that you have successfully queried just this
+program.
+
+** Configuration
+
+Before deploying UPSC-SNMP-Agent for real use, you need to edit the
+script a little bit to make it fit your setup (under the comment that
+says =CONFIGURATION=). Most importantly, you have to set suitable
+default values for the things listed under =upsDefaults=. The
+variables listed here are the ones that UPSC-SNMP-Agent cares about
+from the [[https://networkupstools.org/docs/developer-guide.chunked/apas01.html][set of variables]] potentially provided by NUT (as reported by
+=upsc=).
+
+To tune your config, you will need to study the output of =upsc= for
+your specific UPS, preferably under different conditions: connected
+and charged; on battery; on low battery; just before forced shutdown
+(FSD).
+
+Concentrate on the variables in =upsDefaults= that are missing from
+your =upsc= output. These need meaningful default values, since they
+will not be populated by actual data from the UPS. You also have the
+option of leaving them out of =upsDefaults=; in that case SNMP
+requests for them will get the 'no such object' response. If your data
+consumers can deal with it, this might be a conceptually better
+solution than 'faking' a value. For example, your UPS might not report
+a value for =battery.temperature=; but chances are good that your
+consumers do not care about it either.
+
+Of particular importance is the value of =battery.charge.warning=.
+This will act as the threshold for =battery.charge= under which the
+=upsBatteryStatus= MIB variable will be reported as =low=. This will
+commonly trigger monitoring devices to initiate their shutdown
+sequences, so make sure to set =battery.charge.warning= as appropriate
+to your needs (considering the behaviour of your UPS, as well as the
+time your connected devices require for a clean shutdown).  If your
+UPS is supported by a NUT driver that supplies you with an actual
+=battery.charge.warning= value, then you can relax about this (but you
+still need to test your setup thoroughly).
+
+** Limitations
+
+- No setting of any values -- this agent provides read-only access only.
+- SNMP GETNEXT requests are not supported, only GET.
+- Only one input and one output line is supported (this is for simple
+  and small UPS devices, after all).
+- Missing support for some MIB-defined variables, because they do not
+  have suitable counterparts among the =upsc= output variables:
+  - =upsInputLineBads= counter is not supported.
+  - =upsEstimatedMinutesRemaining= is not supported.
+  - =upsConfigLowBattTime= is not supported.
+- Hardcoded values are reported for the following queries:
+  - alarms: reported as "no alarms present"
+  - tests: reported as "no tests initiated"
+  - countdown timers for shutdown, reboot, startup: reported as "no
+    countdown in effect"

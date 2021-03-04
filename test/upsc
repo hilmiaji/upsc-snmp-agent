@@ -1,0 +1,10 @@
+#!/bin/bash
+# -*- sh-mode -*-
+
+cd $(dirname $0)
+
+# This is a stub upsc command implementation.
+# The data for the specified UPS (received as argument)
+# is simply dumped from the corresponding file.
+
+cat "$1.txt"
