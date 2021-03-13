@@ -68,6 +68,7 @@ import subprocess, sys, time
 
 upsData = {}
 lastTs = 0
+stale = False
 
 if len (sys.argv) > 1:
     theUps = sys.argv [1]
@@ -193,7 +194,9 @@ def getSubOid (sub):
         print ("NONE")
 
 def getOid (oid):
-    if oid.startswith (root):
+    if stale:
+        print ("NONE")
+    elif oid.startswith (root):
         getSubOid (oid [len (root):])
     else:
         print ("NONE")
@@ -217,8 +220,11 @@ def upsc ():
     data = cmd ('upsc ' + theUps + ' 2>/dev/null')
     data = data.strip ().split ('\n')
     for line in data:
-        [key, value] = line.split (':')
-        upsData [key.strip ()] = convertValue (value.strip ())
+        try:
+            [key, value] = line.split (':')
+            upsData [key.strip ()] = convertValue (value.strip ())
+        except ValueError:
+            pass
     return upsData
 
 state = 'init'
@@ -227,6 +233,7 @@ for line in sys.stdin:
     if (ts - lastTs > sampleInterval):
         upsData = upsc ()
         lastTs = ts
+        stale = upsData == {}
 
     arg = line.rstrip ()
     if state == 'init':
